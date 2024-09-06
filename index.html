@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Banana Catching Game</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            touch-action: none;
+            overflow: hidden;
+        }
+        #game-container {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            background-color: #87CEEB;
+            overflow: hidden;
+        }
+        #game-area {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        #player {
+            position: absolute;
+            bottom: 10%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 150px;
+            will-change: transform;
+        }
+        .monkey {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        .monkey * {
+            position: absolute;
+        }
+        .head {
+            width: 60px;
+            height: 60px;
+            background-color: #8B4513;
+            border-radius: 50%;
+            top: 0;
+            left: 20px;
+        }
+        .face {
+            width: 50px;
+            height: 50px;
+            background-image: url('images/face2.png');
+            background-size: cover;
+            border-radius: 100%;
+            top: 3px; /* Decreased from 10px to 8px */
+            left: 5px;
+        }
+        .ear {
+            width: 20px;
+            height: 20px;
+            background-color: #8B4513;
+            border-radius: 50%;
+            top: 5px;
+            overflow: hidden;
+        }
+        .ear::after {
+            content: '';
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background-color: #D2691E;
+            border-radius: 50%;
+            top: 4px;
+            left: 4px;
+        }
+        .left-ear {
+            left: 10px;
+        }
+        .right-ear {
+            right: 10px;
+        }
+        .body {
+            width: 70px;
+            height: 80px;
+            background-color: #8B4513;
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            top: 50px;
+            left: 15px;
+        }
+        .stomach {
+            width: 40px;
+            height: 50px;
+            background-color: #D2691E;
+            border-radius: 50%;
+            top: 15px;
+            left: 15px;
+        }
+        .arm {
+            width: 15px;
+            height: 50px;
+            background-color: #8B4513;
+            border-radius: 10px;
+            top: 70px;
+        }
+        .left-arm {
+            left: 5px;
+            transform: rotate(20deg);
+        }
+        .right-arm {
+            right: 5px;
+            transform: rotate(-20deg);
+        }
+        .leg {
+            width: 20px;
+            height: 40px;
+            background-color: #8B4513;
+            border-radius: 10px;
+            bottom: 0;
+        }
+        .left-leg {
+            left: 25px;
+        }
+        .right-leg {
+            right: 25px;
+        }
+        .tail {
+            width: 40px;
+            height: 60px;
+            border: 10px solid #8B4513;
+            border-right: none;
+            border-top: none;
+            border-radius: 0 0 0 100%;
+            transform: rotate(180deg);
+            left: -10px;
+            bottom: 50px;
+            z-index: -1; /* This places the tail behind the body */
+        }
+        .tail::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: #8B4513;
+            border-radius: 50%;
+            bottom: -10px;
+            right: -10px;
+        }
+        #ground {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 10%;
+            background-color: #8B4513;
+        }
+        .item {
+            position: absolute;
+            font-size: 40px;
+            will-change: transform;
+        }
+        #hud {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 18px;
+            color: #fff;
+            text-shadow: 1px 1px 2px #000;
+            z-index: 20;
+        }
+
+        #start-message {
+            font-size: 18px;
+            text-align: center;
+            max-width: 80%;
+            margin: 20px auto;
+            line-height: 1.5;
+        }
+        #start-screen, #end-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            z-index: 30;
+        }
+        #start-screen button, #end-screen button {
+            font-size: 18px;
+            padding: 10px 20px;
+            margin-top: 20px;
+            cursor: pointer;
+        }
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="game-area">
+            <div id="player">
+                <div class="monkey">
+                    <div class="ear left-ear"></div>
+                    <div class="ear right-ear"></div>
+                    <div class="head">
+                        <div class="face"></div>
+                    </div>
+                    <div class="body">
+                        <div class="stomach"></div>
+                    </div>
+                    <div class="arm left-arm"></div>
+                    <div class="arm right-arm"></div>
+                    <div class="leg left-leg"></div>
+                    <div class="leg right-leg"></div>
+                    <div class="tail"></div>
+                </div>
+            </div>
+            <div id="ground"></div>
+        </div>
+        <div id="hud">
+            <div id="score">Score: 0</div>
+            <div id="timer">Time: 30</div>
+        </div>
+        <div id="start-screen">
+            <h1>Banana Catching Game</h1>
+            <p id="start-message">Hi, I'm Kai! Drag me sideways to collect as much yummy bananas as you can. Please avoid the bombs because they give me ouchies!</p>
+            <button id="start-button">Start Game</button>
+        </div>
+        <div id="end-screen" class="hidden">
+            <h2>Game Over</h2>
+            <p id="final-score"></p>
+            <button id="restart-button">Restart Game</button>
+        </div>
+    </div>
+
+    <script>
+        const gameContainer = document.getElementById('game-container');
+        const gameArea = document.getElementById('game-area');
+        const player = document.getElementById('player');
+        const scoreElement = document.getElementById('score');
+        const timerElement = document.getElementById('timer');
+        const startScreen = document.getElementById('start-screen');
+        const endScreen = document.getElementById('end-screen');
+        const startButton = document.getElementById('start-button');
+        const restartButton = document.getElementById('restart-button');
+        const finalScoreElement = document.getElementById('final-score');
+
+        let score = 0;
+        let timeLeft = 30;
+        let timerInterval;
+        let isStunned = false;
+        let gameIsRunning = false;
+        let targetPosition = 50;
+        let currentPosition = 50;
+        let isDragging = false;
+        let touchStartX = 0;
+
+        function startGame() {
+            resetGame();
+            countdown(3, () => {
+                gameIsRunning = true;
+                timerInterval = setInterval(updateTimer, 1000);
+                spawnItem();
+                gameLoop();
+                updatePlayerPosition();
+            });
+        }
+
+        function resetGame() {
+            score = 0;
+            timeLeft = 30;
+            targetPosition = 50;
+            currentPosition = 50;
+            player.style.left = '50%';
+            updateScore();
+            updateTimer();
+            startScreen.classList.add('hidden');
+            endScreen.classList.add('hidden');
+            clearInterval(timerInterval);
+            gameArea.querySelectorAll('.item').forEach(item => item.remove());
+        }
+
+        function countdown(seconds, callback) {
+            const countdownElement = document.createElement('div');
+            countdownElement.style.position = 'absolute';
+            countdownElement.style.top = '50%';
+            countdownElement.style.left = '50%';
+            countdownElement.style.transform = 'translate(-50%, -50%)';
+            countdownElement.style.fontSize = '72px';
+            countdownElement.style.color = 'white';
+            countdownElement.style.zIndex = '25';
+            gameArea.appendChild(countdownElement);
+
+            function updateCountdown() {
+                if (seconds > 0) {
+                    countdownElement.textContent = seconds;
+                    seconds--;
+                    setTimeout(updateCountdown, 1000);
+                } else {
+                    countdownElement.remove();
+                    callback();
+                }
+            }
+            updateCountdown();
+        }
+
+        function endGame() {
+            gameIsRunning = false;
+            clearInterval(timerInterval);
+            finalScoreElement.textContent = `Final Score: ${score}`;
+            endScreen.classList.remove('hidden');
+            gameArea.querySelectorAll('.item').forEach(item => item.remove());
+        }
+
+        function updateScore() {
+            scoreElement.textContent = `Score: ${score}`;
+        }
+
+        function updateTimer() {
+            timeLeft--;
+            timerElement.textContent = `Time: ${timeLeft}`;
+            if (timeLeft <= 0) {
+                endGame();
+            }
+        }
+
+        function createItem(isBanana) {
+            const item = document.createElement('div');
+            item.classList.add('item');
+            item.textContent = isBanana ? '🍌' : '💣';
+            item.style.transform = `translate(${Math.random() * (window.innerWidth - 40)}px, -40px)`;
+            item.speed = Math.random() * 3 + 4; // Random speed between 4 and 7
+            gameArea.appendChild(item);
+            return item;
+        }
+
+        function spawnItem() {
+            if (!gameIsRunning) return;
+
+            const isBanana = Math.random() < 0.7;
+            const item = createItem(isBanana);
+
+            const nextSpawnTime = Math.random() * 500 + 500;
+            setTimeout(spawnItem, nextSpawnTime);
+
+            if (isBanana && Math.random() < 0.3) {
+                setTimeout(() => {
+                    const nearbyBomb = createItem(false);
+                    const bombX = Math.max(0, Math.min(window.innerWidth - 40, parseFloat(item.style.transform.split('(')[1]) + (Math.random() - 0.5) * 100));
+                    nearbyBomb.style.transform = `translate(${bombX}px, -40px)`;
+                    nearbyBomb.speed = item.speed * (Math.random() * 0.4 + 0.8);
+                }, Math.random() * 200);
+            }
+        }
+
+        function updatePlayerPosition() {
+            currentPosition += (targetPosition - currentPosition) * 0.1;
+            player.style.left = `${currentPosition}%`;
+            if (gameIsRunning) {
+                requestAnimationFrame(updatePlayerPosition);
+            }
+        }
+
+        function movePlayer(newPosition) {
+            if (isStunned) return;
+            targetPosition = Math.max(0, Math.min(newPosition, 100));
+        }
+
+        function update() {
+            const items = document.querySelectorAll('.item');
+            const playerRect = player.getBoundingClientRect();
+            const groundTop = window.innerHeight - (window.innerHeight * 0.1); // Calculate ground position
+        
+            items.forEach(item => {
+                const rect = item.getBoundingClientRect();
+                const transform = new WebKitCSSMatrix(window.getComputedStyle(item).transform);
+                const currentY = transform.m42;
+        
+                if (rect.bottom >= playerRect.top && rect.top <= playerRect.bottom &&
+                    rect.right >= playerRect.left && rect.left <= playerRect.right) {
+                    if (item.textContent === '🍌') {
+                        score += 10;
+                        updateScore();
+                    } else if (item.textContent === '💣' && !isStunned) {
+                        stunPlayer();
+                    }
+                    item.remove();
+                } else if (rect.bottom >= groundTop) {
+                    item.remove();
+                } else {
+                    item.style.transform = `translate(${transform.m41}px, ${currentY + item.speed}px)`;
+                }
+            });
+        }
+
+        function gameLoop() {
+            if (!gameIsRunning) return;
+            update();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function stunPlayer() {
+            isStunned = true;
+            player.style.opacity = '0.5';
+            setTimeout(() => {
+                isStunned = false;
+                player.style.opacity = '1';
+            }, 2000);
+        }
+
+        startButton.addEventListener('click', startGame);
+        restartButton.addEventListener('click', startGame);
+
+        document.addEventListener('keydown', (e) => {
+            if (!gameIsRunning) return;
+            if (e.key === 'ArrowLeft') movePlayer(targetPosition - 2);
+            if (e.key === 'ArrowRight') movePlayer(targetPosition + 2);
+        });
+
+        gameContainer.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+            isDragging = true;
+        });
+
+        gameContainer.addEventListener('touchmove', (e) => {
+            if (!gameIsRunning || !isDragging) return;
+            e.preventDefault(); // Prevent scrolling only during the game
+            const touch = e.touches[0];
+            movePlayer((touch.clientX / window.innerWidth) * 100);
+        });
+
+        gameContainer.addEventListener('touchend', (e) => {
+            isDragging = false;
+            if (!gameIsRunning) {
+                // Check if the touch ended on a button
+                const touch = e.changedTouches[0];
+                const element = document.elementFromPoint(touch.clientX, touch.clientY);
+                if (element === startButton || element === restartButton) {
+                    element.click();
+                }
+            }
+        });
+
+        gameContainer.addEventListener('mousedown', (e) => {
+            isDragging = true;
+        });
+
+        gameContainer.addEventListener('mousemove', (e) => {
+            if (!gameIsRunning || !isDragging) return;
+            movePlayer((e.clientX / window.innerWidth) * 100);
+        });
+
+        gameContainer.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+
+        gameContainer.addEventListener('mouseleave', () => {
+            isDragging = false;
+        });
+    </script>
+</body>
+</html>
